@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Sistem Informasi Jembatan - Bidang Operasi</title>
+  <meta name="description" content="Portal Aplikasi Web Bidang Operasi - Google Apps Script Integration">
+  <meta name="theme-color" content="#1e293b">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="apple-touch-icon" href="favicon.png">
+
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --bg-dark: #0f172a;
+      --header-bg: rgba(15, 23, 42, 0.85);
+      --header-border: rgba(255, 255, 255, 0.08);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #38bdf8;
+      --header-height: 54px;
+      --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+    }
+
+    /* Container Utama */
+    .app-container {
+      display: flex;
+      flex-direction: column;
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+      position: relative;
+      background-color: var(--bg-dark);
+    }
+
+    /* Top Navigation Bar */
+    .top-bar {
+      height: var(--header-height);
+      background: var(--header-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--header-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 1rem;
+      z-index: 50;
+      transition: var(--transition);
+    }
+
+    .top-bar.collapsed {
+      transform: translateY(-100%);
+      position: absolute;
+      width: 100%;
+    }
+
+    .brand-section {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .brand-logo {
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: #ffffff;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+      flex-shrink: 0;
+    }
+
+    .brand-logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+
+    .brand-text h1 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-main);
+      line-height: 1.2;
+    }
+
+    .brand-text p {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      letter-spacing: 0.02em;
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .action-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.4rem 0.65rem;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-main);
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      text-decoration: none;
+      transition: var(--transition);
+    }
+
+    .action-btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .action-btn.primary {
+      background: var(--primary);
+      border-color: var(--primary);
+    }
+
+    .action-btn.primary:hover {
+      background: var(--primary-hover);
+    }
+
+    .action-btn svg {
+      width: 15px;
+      height: 15px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* Floating toggle bar button */
+    .toggle-bar-btn {
+      position: absolute;
+      top: 8px;
+      right: 12px;
+      z-index: 60;
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--header-border);
+      color: var(--text-muted);
+      border-radius: 20px;
+      padding: 4px 10px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      gap: 4px;
+      transition: var(--transition);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .toggle-bar-btn:hover {
+      color: var(--text-main);
+      background: rgba(15, 23, 42, 0.95);
+    }
+
+    .top-bar.collapsed + .toggle-bar-btn {
+      display: inline-flex;
+    }
+
+    /* Area Iframe */
+    .frame-container {
+      flex: 1;
+      width: 100%;
+      height: 100%;
+      position: relative;
+      background-color: #ffffff;
+    }
+
+    iframe#appFrame {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: block;
+      background-color: #ffffff;
+    }
+
+    /* Loading Overlay */
+    .loading-overlay {
+      position: absolute;
+      inset: 0;
+      background: var(--bg-dark);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1.25rem;
+      z-index: 40;
+      transition: opacity 0.4s ease, visibility 0.4s ease;
+    }
+
+    .loading-overlay.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .loading-logo-box {
+      position: relative;
+      width: 72px;
+      height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .loading-logo-box img {
+      width: 52px;
+      height: 52px;
+      object-fit: contain;
+      border-radius: 50%;
+      background: #ffffff;
+      padding: 2px;
+      z-index: 2;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+    }
+
+    .spinner-ring {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 3px solid rgba(249, 115, 22, 0.2);
+      border-top-color: #f97316;
+      border-radius: 50%;
+      animation: spin 0.9s cubic-bezier(0.55, 0.15, 0.45, 0.85) infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+      font-size: 0.92rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      letter-spacing: 0.01em;
+    }
+
+    /* Warning Banner / Not Configured */
+    .setup-banner {
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 90%;
+      max-width: 540px;
+      background: #1e293b;
+      border: 1px solid #334155;
+      padding: 1.75rem;
+      border-radius: 12px;
+      box-shadow: 0 20px 30px rgba(0, 0, 0, 0.4);
+      z-index: 45;
+      text-align: center;
+    }
+
+    .setup-banner.show {
+      display: block;
+    }
+
+    .setup-banner h2 {
+      font-size: 1.25rem;
+      margin-bottom: 0.6rem;
+      color: var(--accent);
+    }
+
+    .setup-banner p {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+      margin-bottom: 1.2rem;
+    }
+
+    .setup-banner code {
+      display: block;
+      background: #0f172a;
+      padding: 0.6rem 0.8rem;
+      border-radius: 6px;
+      font-family: monospace;
+      font-size: 0.8rem;
+      color: #38bdf8;
+      text-align: left;
+      margin-bottom: 1.2rem;
+      overflow-x: auto;
+    }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      .brand-text p {
+        display: none;
+      }
+      .action-btn span {
+        display: none;
+      }
+      .action-btn {
+        padding: 0.45rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    <!-- Header / Navbar -->
+    <header class="top-bar" id="topBar">
+      <div class="brand-section">
+        <div class="brand-logo">
+          <img src="logo.png" alt="Logo Timika Search and Rescue">
+        </div>
+        <div class="brand-text">
+          <h1>Sistem Jembatan</h1>
+          <p>Bidang Operasi - Google Apps Script Portal</p>
+        </div>
+      </div>
+
+      <div class="nav-actions">
+        <!-- Reload Frame -->
+        <button class="action-btn" id="btnReload" title="Muat Ulang Halaman">
+          <svg viewBox="0 0 24 24"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          <span>Refresh</span>
+        </button>
+
+        <!-- Fullscreen Toggle -->
+        <button class="action-btn" id="btnFullscreen" title="Layar Penuh">
+          <svg viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+          <span>Fullscreen</span>
+        </button>
+
+        <!-- Open Direct / New Tab -->
+        <a class="action-btn primary" id="btnDirectLink" href="#" target="_blank" rel="noopener noreferrer" title="Buka Langsung di Tab Baru">
+          <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></line></svg>
+          <span>Buka di Tab Baru</span>
+        </a>
+
+        <!-- Collapse Header Button -->
+        <button class="action-btn" id="btnHideBar" title="Sembunyikan Bilah Atas">
+          <svg viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Tombol Mengembalikan Header Saat Disembunyikan -->
+    <button class="toggle-bar-btn" id="btnShowBar" title="Tampilkan Menu Atas">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      <span>Tampilkan Menu</span>
+    </button>
+
+    <!-- Frame Container -->
+    <main class="frame-container">
+      <!-- Loading Indicator -->
+      <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-logo-box">
+          <div class="spinner-ring"></div>
+          <img src="logo.png" alt="Logo Timika Search and Rescue">
+        </div>
+        <div class="loading-text">Memuat Sistem Informasi Jembatan...</div>
+      </div>
+
+      <!-- Setup Helper Banner (Jika URL belum diganti) -->
+      <div class="setup-banner" id="setupBanner">
+        <h2>Konfigurasi Diperlukan</h2>
+        <p>Silakan masukkan URL Web App Google Apps Script Anda pada file <code>index.html</code> baris konfigurasi:</p>
+        <code>const APPS_SCRIPT_URL = "URL_WEB_APP_ANDA";</code>
+        <p>Pastikan pada Google Apps Script Anda telah mengizinkan iframe dengan kode:</p>
+        <code>.setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)</code>
+        <a href="https://github.com" target="_blank" class="action-btn primary" style="display:inline-block;">Lihat Dokumentasi README</a>
+      </div>
+
+      <!-- Embedded Iframe -->
+      <iframe 
+        id="appFrame" 
+        src="about:blank"
+        title="Web App Bidang Operasi"
+        allow="accelerometer; autoplay; camera; encrypted-media; geolocation; gyroscope; microphone; fullscreen"
+        loading="eager">
+      </iframe>
+    </main>
+  </div>
+
+  <script>
+    /**
+     * =========================================================================
+     * KONFIGURASI URL GOOGLE APPS SCRIPT
+     * =========================================================================
+     * Masukkan URL deploy Web App Google Apps Script Anda di bawah ini:
+     * Contoh: "https://script.google.com/macros/s/AKfycbx.../exec"
+     */
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwmQtTVQIOCxuuzDoSM3RpEfFrgKGeCXmp80-AuC_PeYw6ozKx4FBn6UH-GYKdSIyyZ/exec";
+
+    // DOM Elements
+    const appFrame = document.getElementById("appFrame");
+    const loadingOverlay = document.getElementById("loadingOverlay");
+    const setupBanner = document.getElementById("setupBanner");
+    const btnDirectLink = document.getElementById("btnDirectLink");
+    const btnReload = document.getElementById("btnReload");
+    const btnFullscreen = document.getElementById("btnFullscreen");
+    const topBar = document.getElementById("topBar");
+    const btnHideBar = document.getElementById("btnHideBar");
+    const btnShowBar = document.getElementById("btnShowBar");
+
+    // Inisialisasi Aplikasi
+    function initApp() {
+      const isConfigured = APPS_SCRIPT_URL && 
+                           APPS_SCRIPT_URL.trim() !== "" && 
+                           !APPS_SCRIPT_URL.includes("YOUR_APPS_SCRIPT_WEB_APP_URL_HERE");
+
+      if (!isConfigured) {
+        loadingOverlay.classList.add("hidden");
+        setupBanner.classList.add("show");
+        btnDirectLink.style.display = "none";
+        return;
+      }
+
+      // Update link buka langsung di tab baru
+      btnDirectLink.href = APPS_SCRIPT_URL;
+
+      // Set URL ke iframe
+      appFrame.src = APPS_SCRIPT_URL;
+
+      // Event saat iframe selesai dimuat
+      appFrame.onload = () => {
+        loadingOverlay.classList.add("hidden");
+      };
+
+      // Fallback timer: hilangkan loader setelah 8 detik jika event onload terhalang
+      setTimeout(() => {
+        loadingOverlay.classList.add("hidden");
+      }, 8000);
+    }
+
+    // Aksi Refresh
+    btnReload.addEventListener("click", () => {
+      loadingOverlay.classList.remove("hidden");
+      if (appFrame.src && appFrame.src !== "about:blank") {
+        appFrame.src = appFrame.src;
+      }
+    });
+
+    // Aksi Fullscreen
+    btnFullscreen.addEventListener("click", () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch((err) => {
+          console.warn("Fullscreen request error:", err);
+        });
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+      }
+    });
+
+    // Sembunyikan & Tampilkan Menu Atas
+    btnHideBar.addEventListener("click", () => {
+      topBar.classList.add("collapsed");
+    });
+
+    btnShowBar.addEventListener("click", () => {
+      topBar.classList.remove("collapsed");
+    });
+
+    // Jalankan inisialisasi
+    document.addEventListener("DOMContentLoaded", initApp);
+  </script>
+</body>
+</html>
